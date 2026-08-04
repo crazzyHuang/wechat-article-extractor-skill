@@ -51,11 +51,11 @@ class WeChatArticleTests(unittest.TestCase):
         original_stdout = sys.stdout
         try:
             sys.stdout = stream
-            wechat_article.write_stdout_utf8("正文包含不换行空格：\\u00a0\\n")
+            wechat_article.write_stdout_utf8("正文包含不换行空格：\u00a0\n")
             stream.flush()
         finally:
             sys.stdout = original_stdout
-        self.assertEqual(raw.getvalue().decode("utf-8"), "正文包含不换行空格：\\u00a0\\n")
+        self.assertEqual(raw.getvalue().decode("utf-8"), "正文包含不换行空格：\u00a0\n")
 
     def test_exact_host_validation(self) -> None:
         valid = wechat_article.validate_url("https://mp.weixin.qq.com/s/abc?x=1#fragment")
