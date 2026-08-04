@@ -45,6 +45,18 @@ var msg_link = "https://mp.weixin.qq.com/s/test";
 
 
 class WeChatArticleTests(unittest.TestCase):
+    def test_stdout_is_reconfigured_from_gbk_to_utf8(self) -> None:
+        raw = io.BytesIO()
+        stream = io.TextIOWrapper(raw, encoding="gbk", newline="")
+        original_stdout = sys.stdout
+        try:
+            sys.stdout = stream
+            wechat_article.write_stdout_utf8("正文包含不换行空格：\\u00a0\\n")
+            stream.flush()
+        finally:
+            sys.stdout = original_stdout
+        self.assertEqual(raw.getvalue().decode("utf-8"), "正文包含不换行空格：\\u00a0\\n")
+
     def test_exact_host_validation(self) -> None:
         valid = wechat_article.validate_url("https://mp.weixin.qq.com/s/abc?x=1#fragment")
         self.assertEqual(valid, "https://mp.weixin.qq.com/s/abc?x=1")

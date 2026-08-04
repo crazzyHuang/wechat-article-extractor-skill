@@ -594,6 +594,31 @@ def write_output(path: Path, content: str, force: bool) -> None:
     path.write_text(content, encoding="utf-8", newline="\n")
 
 
+def configure_utf8_stream(stream: Any) -> None:
+    reconfigure = getattr(stream, "reconfigure", None)
+    if not callable(reconfigure):
+        return
+    try:
+        reconfigure(encoding="utf-8")
+    except (OSError, ValueError):
+        # StringIO, redirected streams, and some embedding hosts cannot be
+        # reconfigured. They commonly accept Unicode directly, so leave them.
+        pass
+
+
+def write_stdout_utf8(content: str) -> None:
+    configure_utf8_stream(sys.stdout)
+    try:
+        sys.stdout.write(content)
+    except UnicodeEncodeError:
+        # Preserve JSON/Markdown exactly when a legacy Windows console remains
+        # locked to a code page such as GBK.
+        raw = getattr(sys.stdout, "buffer", None)
+        if raw is None:
+            raise
+        raw.write(content.encode("utf-8"))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source_url", nargs="?", help="Public WeChat article URL")
@@ -607,6 +632,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    configure_utf8_stream(sys.stderr)
     args = build_parser().parse_args(argv)
     try:
         source_url = validate_url(args.source_url) if args.source_url else None
@@ -633,7 +659,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.output:
             write_output(args.output, output, args.force)
         else:
-            sys.stdout.write(output)
+            write_stdout_utf8(output)
     except InputError as exc:
         sys.stderr.write(f"error: {exc}\n")
         return 3
