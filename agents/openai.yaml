@@ -1,0 +1,7 @@
+interface:
+  display_name: "WeChat Article Reader"
+  short_description: "Safely read and summarize public WeChat articles"
+  default_prompt: "Use $wechat-article-extractor-skill to read this public WeChat article and summarize only content that was extracted completely."
+
+policy:
+  allow_implicit_invocation: true
